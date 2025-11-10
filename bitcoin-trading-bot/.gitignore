@@ -1,0 +1,65 @@
+# Environment Variables (enthält API-Keys!)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Log-Dateien
+logs/*.log
+logs/*.log.*
+
+# Bot State (kann sensible Daten enthalten)
+config/bot_state.json
+config/*.json
+!config/config.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup-Dateien
+*.bak
+*.backup
+*.tmp
+
+# Jupyter Notebooks (falls später verwendet)
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Backtesting Data (kann groß werden)
+data/historical/*.csv
+data/historical/*.json

@@ -1,0 +1,27 @@
+# Bitcoin Trading Bot - Dependencies
+# Python 3.8+
+
+# Binance API
+python-binance==1.0.19
+
+# Configuration & Environment
+pyyaml==6.0.1
+python-dotenv==1.0.0
+
+# Data Handling
+pandas==2.1.4
+numpy==1.26.2
+
+# Logging & Monitoring
+colorlog==6.8.0
+
+# Date & Time
+python-dateutil==2.8.2
+
+# HTTP & Networking (für Retry-Logik)
+requests==2.31.0
+urllib3==2.1.0
+
+# Testing (optional, für später)
+pytest==7.4.3
+pytest-mock==3.12.0

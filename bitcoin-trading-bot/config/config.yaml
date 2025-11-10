@@ -1,0 +1,118 @@
+# ===================================================================
+# Bitcoin Trading Bot - Hauptkonfiguration
+# ===================================================================
+# WICHTIG: Alle Parameter können ohne Code-Änderung angepasst werden
+# ===================================================================
+
+# API Konfiguration
+api:
+  # Binance Testnet Base URL
+  testnet_url: "https://testnet.binance.vision/api"
+  # Timeout für API-Anfragen (Sekunden)
+  request_timeout: 30
+  # Maximale Anzahl Retry-Versuche bei Fehlern
+  max_retries: 3
+  # Wartezeit zwischen Retries (Sekunden)
+  retry_delay: 2
+
+# Trading Pair
+trading:
+  # Haupt-Trading-Pair
+  symbol: "BTCUSDT"
+  # Minimale Wartezeit zwischen Trades (Sekunden)
+  min_trade_interval: 300  # 5 Minuten
+  # Maximale Anzahl offener Orders gleichzeitig
+  max_concurrent_orders: 5
+
+# VERKAUFEN-Modus Parameter
+sell_mode:
+  # Schwellenwert: Verkaufe wenn Preis um X% steigt
+  threshold_percent: 5.0  # 5%
+  # Maximaler Anteil des BTC-Bestands pro Verkauf
+  max_sell_fraction: 0.10  # 10%
+  # Staffelung: Anzahl der Teilverkäufe
+  num_splits: 3
+  # Referenzpunkt für Preisvergleich
+  # Optionen: "last_trade", "mode_switch", "24h_avg", "manual"
+  reference_point: "last_trade"
+  # Slippage-Toleranz (Prozent)
+  slippage_tolerance: 0.5  # 0.5%
+
+# KAUFEN-Modus Parameter
+buy_mode:
+  # Schwellenwert: Kaufe wenn Preis um X% fällt
+  threshold_percent: 3.0  # 3%
+  # Maximaler Anteil des USDT-Guthabens pro Kauf
+  max_buy_fraction: 0.10  # 10%
+  # Staffelung: Anzahl der Teilkäufe (DCA)
+  num_splits: 3
+  # Referenzpunkt für Preisvergleich
+  reference_point: "last_trade"
+  # Slippage-Toleranz (Prozent)
+  slippage_tolerance: 0.5  # 0.5%
+
+# HOLD-Modus Parameter
+hold_mode:
+  # Preis-Monitoring aktivieren
+  enable_price_monitoring: true
+  # Monitoring-Intervall (Sekunden)
+  monitoring_interval: 60  # 1 Minute
+  # Warn-Schwellenwerte für Benachrichtigungen
+  alert_thresholds:
+    # Warne bei Preisanstieg über X%
+    price_rise_percent: 10.0  # 10%
+    # Warne bei Preisrückgang über X%
+    price_drop_percent: 10.0  # 10%
+
+# Sicherheits-Parameter
+safety:
+  # Maximale Order-Größe in USDT (Schutz vor versehentlich großen Orders)
+  max_order_size_usdt: 1000.0
+  # Minimale Order-Größe in USDT (Binance Mindestbetrag)
+  min_order_size_usdt: 10.0
+  # Maximaler täglicher Handelsumsatz in USDT
+  max_daily_volume_usdt: 5000.0
+  # Emergency Stop: Bot stoppen bei Verlust über X% des Startkapitals
+  emergency_stop_loss_percent: 20.0  # 20%
+  # Rate Limiting: Maximale API-Anfragen pro Minute
+  max_api_calls_per_minute: 50
+
+# Logging Konfiguration
+logging:
+  # Log-Level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+  # Log-Datei Speicherort
+  file_path: "logs/trading_bot.log"
+  # Maximale Log-Datei-Größe (MB) bevor Rotation
+  max_file_size_mb: 10
+  # Anzahl der aufzubewahrenden Log-Dateien
+  backup_count: 5
+  # Konsolen-Ausgabe aktivieren
+  console_output: true
+  # Farb-Coding in Konsole aktivieren
+  colored_output: true
+
+# State Management
+state:
+  # Speicherort für Bot-Status
+  state_file: "config/bot_state.json"
+  # Status speichern nach jedem Trade
+  save_after_trade: true
+  # Automatisches Backup-Intervall (Sekunden), 0 = deaktiviert
+  backup_interval: 3600  # 1 Stunde
+
+# Benachrichtigungen (für spätere Erweiterung)
+notifications:
+  # E-Mail Benachrichtigungen aktivieren
+  email_enabled: false
+  # Telegram Benachrichtigungen aktivieren
+  telegram_enabled: false
+  # Discord Webhook aktivieren
+  discord_enabled: false
+
+# Backtesting (Platzhalter für Phase 3)
+backtesting:
+  enabled: false
+  historical_data_path: "data/historical/"
+  start_date: "2024-01-01"
+  end_date: "2024-12-31"
