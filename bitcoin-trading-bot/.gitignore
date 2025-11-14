@@ -1,0 +1,33 @@
+# Logs
+*.log
+trading_bot.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Sensible Daten
+*.env
+.env
+config_local.py
+
+# API Keys (falls in separater Datei)
+api_keys.py
+secrets.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
