@@ -1,14 +1,14 @@
 # Bitcoin Trading Bot - Python Dependencies
+# PRODUCTION-READY: Minimale Dependencies!
 
-# Core
-numpy>=1.24.0          # Für technische Analysen (MA, RSI)
+# Core (nur Requests für API-Calls)
 requests>=2.31.0       # Für API-Calls (CoinGecko)
 
-# Optional: Für echtes Trading (auskommentiert)
-# ccxt>=4.0.0          # Exchange Integration (Binance, Kraken, etc.)
-# python-telegram-bot>=20.0  # Telegram Benachrichtigungen
+# KEINE numpy/pandas benötigt - reine Python-Implementierung!
 
-# Optional: Für erweiterte Analysen
-# pandas>=2.0.0        # Datenanalyse
-# matplotlib>=3.7.0    # Visualisierungen
-# ta>=0.11.0           # Technical Analysis Library
+# Optional: Für echtes Trading
+# ccxt>=4.0.0          # Exchange Integration (Binance, Kraken, etc.)
+
+# Optional: Für Benachrichtigungen
+# python-telegram-bot>=20.0  # Telegram Benachrichtigungen
+# sendgrid>=6.9.0      # Email Benachrichtigungen

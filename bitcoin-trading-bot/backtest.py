@@ -3,16 +3,17 @@ Backtesting-System für Bitcoin Trading Strategie
 
 Testet die Strategie mit historischen Daten um zu sehen,
 wie sie in der Vergangenheit performed hätte.
+
+PRODUCTION-READY Version - Keine externen Dependencies benötigt!
 """
 
 import requests
-import numpy as np
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 import json
 
 import config
-from strategy import ConservativeStrategy
+from strategy import ConservativeStrategy, mean
 
 
 class Backtester:

@@ -1,9 +1,10 @@
 """
 Konservative Bitcoin Trading Strategie
 Ziel: 100 EUR/Woche aus Bitcoin verkaufen zum optimalen Zeitpunkt
+
+PRODUCTION-READY Version - Keine externen Dependencies benötigt!
 """
 
-import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import logging
@@ -11,6 +12,16 @@ import logging
 import config
 
 logger = logging.getLogger(__name__)
+
+
+def mean(values: List[float]) -> float:
+    """Berechne Durchschnitt einer Liste"""
+    return sum(values) / len(values) if values else 0.0
+
+
+def diff(values: List[float]) -> List[float]:
+    """Berechne Differenzen zwischen aufeinanderfolgenden Werten"""
+    return [values[i] - values[i-1] for i in range(1, len(values))]
 
 
 class ConservativeStrategy:
@@ -69,8 +80,8 @@ class ConservativeStrategy:
             logger.warning(f"Nicht genug Daten für MA: {len(prices)} < {config.MA_LONG_PERIOD}")
             return None, None
 
-        ma_short = np.mean(prices[-config.MA_SHORT_PERIOD:])
-        ma_long = np.mean(prices[-config.MA_LONG_PERIOD:])
+        ma_short = mean(prices[-config.MA_SHORT_PERIOD:])
+        ma_long = mean(prices[-config.MA_LONG_PERIOD:])
 
         return ma_short, ma_long
 
@@ -96,18 +107,15 @@ class ConservativeStrategy:
             return 50.0  # Neutral
 
         # Berechne Preisänderungen
-        deltas = np.diff(prices)
+        deltas = diff(prices)
 
         # Separate Gewinne und Verluste
-        gains = deltas.copy()
-        losses = deltas.copy()
-        gains[gains < 0] = 0
-        losses[losses > 0] = 0
-        losses = abs(losses)
+        gains = [d if d > 0 else 0 for d in deltas]
+        losses = [abs(d) if d < 0 else 0 for d in deltas]
 
-        # Durchschnittliche Gewinne/Verluste
-        avg_gain = np.mean(gains[-period:])
-        avg_loss = np.mean(losses[-period:])
+        # Durchschnittliche Gewinne/Verluste (letzte period Werte)
+        avg_gain = mean(gains[-period:])
+        avg_loss = mean(losses[-period:])
 
         if avg_loss == 0:
             return 100.0  # Maximaler RSI
