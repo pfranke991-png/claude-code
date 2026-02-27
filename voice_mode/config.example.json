@@ -1,0 +1,30 @@
+{
+  "provider": "openai",
+  "api_key_env": "OPENAI_API_KEY",
+  "base_url": "https://api.openai.com/v1",
+  "chat_model": "gpt-4o",
+  "system_prompt": "Du bist ein hilfreicher Sprachassistent. Antworte klar und präzise auf Deutsch.",
+  "assistant_mode": "normal",
+  "microphone_device": null,
+  "samplerate": 16000,
+  "channels": 1,
+  "whisper_model": "large-v3",
+  "compute_type": "float16",
+  "device": "cuda",
+  "language": "de",
+  "vad_filter": true,
+  "beam_size": 5,
+  "temperature": 0.0,
+  "tts_engine": "edge",
+  "edge_voice": "de-DE-KatjaNeural",
+  "edge_rate": "+0%",
+  "edge_volume": "+0%",
+  "pyttsx3_rate": 190,
+  "pyttsx3_volume": 1.0,
+  "copy_chat_reply_to_clipboard": false,
+  "hotkeys": {
+    "start_stop": "<f8>",
+    "pause_resume": "<f9>",
+    "quit": "<f10>"
+  }
+}
