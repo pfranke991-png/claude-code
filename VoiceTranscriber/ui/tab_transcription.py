@@ -189,10 +189,12 @@ class TranscriptionTab(QWidget):
         self.time_label.setText(f"{m:02d}:{s:02d}")
 
     def set_whisper_badge(self, model_name):
-        self.whisper_badge.setText(f"Whisper: {model_name}")
-        self.whisper_badge.setObjectName("badge")
-        self.whisper_badge.setStyleSheet(self.whisper_badge.styleSheet())
-        # Force style refresh
+        if model_name:
+            self.whisper_badge.setText(f"Whisper: {model_name}")
+            self.whisper_badge.setObjectName("badge")
+        else:
+            self.whisper_badge.setText("Whisper: Kein Modell")
+            self.whisper_badge.setObjectName("badgeInactive")
         self.whisper_badge.style().unpolish(self.whisper_badge)
         self.whisper_badge.style().polish(self.whisper_badge)
 

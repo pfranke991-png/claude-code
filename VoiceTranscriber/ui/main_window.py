@@ -2,11 +2,11 @@
 
 import threading
 import time
+import traceback
 import numpy as np
 
-from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout, QMessageBox
 from PyQt6.QtCore import QTimer, pyqtSignal, QObject
-from PyQt6.QtGui import QIcon
 
 from core.database import Database
 from core.audio import AudioRecorder
@@ -15,13 +15,16 @@ from core.postprocessor import PostProcessor
 from ui.tab_transcription import TranscriptionTab
 from ui.tab_providers import ProviderTab
 from ui.tab_settings import SettingsTab
-from ui.theme import STYLESHEET, NEON_GREEN
+from ui.theme import STYLESHEET
 
 
 class TranscriptionSignals(QObject):
     """Signals for thread-safe UI updates from transcription thread."""
     text_ready = pyqtSignal(str)
     final_text = pyqtSignal(str)
+    whisper_badge = pyqtSignal(str)    # model_name
+    whisper_error = pyqtSignal(str)    # error message
+    status_msg = pyqtSignal(str)       # general status
 
 
 class MainWindow(QMainWindow):
@@ -43,7 +46,6 @@ class MainWindow(QMainWindow):
         self._recording = False
         self._transcribe_thread = None
         self._stop_event = threading.Event()
-        self._accumulated_audio = []
         self._start_time = 0
 
         self._setup_ui()
@@ -87,31 +89,45 @@ class MainWindow(QMainWindow):
         # Provider tab
         self.tab_providers.provider_changed.connect(self._on_provider_changed)
 
-        # Transcription signals (thread-safe)
+        # Thread-safe signals
         self.signals.text_ready.connect(self._on_live_text)
         self.signals.final_text.connect(self._on_final_text)
+        self.signals.whisper_badge.connect(self._on_whisper_badge)
+        self.signals.whisper_error.connect(self._on_whisper_error)
 
     def _load_initial_state(self):
         # Load archive
         archive = self.db.get_archive()
         self.tab_transcription.load_archive(archive)
 
-        # Load last whisper model
-        last_model = self.db.get_setting("whisper_model", "base")
-        self._load_whisper_model(last_model)
+        # Check if a whisper model was previously downloaded - only load if cached
+        last_model = self.db.get_setting("whisper_model")
+        if last_model and self.transcriber.is_model_downloaded(last_model):
+            self._load_whisper_model(last_model)
+        else:
+            self.tab_transcription.set_whisper_badge(None)
 
         # Load active provider
         self._on_provider_changed()
 
     def _load_whisper_model(self, model_name):
-        """Load whisper model in background."""
+        """Load whisper model in background thread (only if already downloaded)."""
         def _load():
             try:
                 self.transcriber.load_model(model_name)
-                self.tab_transcription.set_whisper_badge(model_name)
+                self.signals.whisper_badge.emit(model_name)
             except Exception as e:
-                print(f"Fehler beim Laden von Whisper Modell: {e}")
+                self.signals.whisper_error.emit(f"Whisper '{model_name}': {e}")
         threading.Thread(target=_load, daemon=True).start()
+
+    def _on_whisper_badge(self, model_name):
+        """Thread-safe badge update on main thread."""
+        self.tab_transcription.set_whisper_badge(model_name)
+
+    def _on_whisper_error(self, error_msg):
+        """Show whisper loading error."""
+        self.tab_transcription.set_whisper_badge(None)
+        print(f"Whisper Fehler: {error_msg}")
 
     def _on_model_loaded(self, model_name):
         self.tab_transcription.set_whisper_badge(model_name)
@@ -135,12 +151,23 @@ class MainWindow(QMainWindow):
             self.tab_transcription.set_postproc_badge(None)
 
     def _apply_settings(self):
-        nr = self.tab_settings.is_noise_reduce()
-        self.transcriber.noise_reduce = nr
-        sr = self.tab_settings.get_sample_rate()
-        self.transcriber.sample_rate = sr
+        self.transcriber.noise_reduce = self.tab_settings.is_noise_reduce()
+        self.transcriber.sample_rate = self.tab_settings.get_sample_rate()
 
     def _start_recording(self):
+        # Check if whisper model is loaded
+        if self.transcriber.model is None:
+            QMessageBox.warning(
+                self, "Kein Modell",
+                "Bitte zuerst ein Whisper-Modell in Tab 'Audio & Modelle' herunterladen und laden.",
+            )
+            self.tab_transcription.start_btn.setEnabled(True)
+            self.tab_transcription.pause_btn.setEnabled(False)
+            self.tab_transcription.stop_btn.setEnabled(False)
+            # Switch to settings tab
+            self.tabs.setCurrentIndex(2)
+            return
+
         if self._recording:
             # Resume from pause
             self.recorder.resume()
@@ -149,7 +176,6 @@ class MainWindow(QMainWindow):
         self._apply_settings()
         self._recording = True
         self._stop_event.clear()
-        self._accumulated_audio = []
         self._start_time = time.time()
 
         sr = self.tab_settings.get_sample_rate()
@@ -161,7 +187,16 @@ class MainWindow(QMainWindow):
             channels=1,
             chunk_duration=0.5,
         )
-        self.recorder.start(device_index=device)
+
+        try:
+            self.recorder.start(device_index=device)
+        except Exception as e:
+            QMessageBox.critical(self, "Audio Fehler", f"Mikrofon konnte nicht gestartet werden:\n{e}")
+            self._recording = False
+            self.tab_transcription.start_btn.setEnabled(True)
+            self.tab_transcription.pause_btn.setEnabled(False)
+            self.tab_transcription.stop_btn.setEnabled(False)
+            return
 
         # Start live transcription thread
         self._transcribe_thread = threading.Thread(
@@ -187,23 +222,24 @@ class MainWindow(QMainWindow):
 
         # Final transcription of complete audio
         def _final():
-            audio = self.recorder.get_all_audio()
-            duration = self.recorder.get_duration()
-            if len(audio) > 0:
-                text = self.transcriber.transcribe_audio(audio)
-                # Post-process if configured
-                raw_text = text
-                if self.postprocessor.client and text.strip():
-                    text = self.postprocessor.process(text)
-                self.signals.final_text.emit(text)
-                # Save to archive
-                provider = self.db.get_active_provider()
-                self.db.save_transcription(
-                    text, raw_text,
-                    provider=provider["name"] if provider else None,
-                    model=self.transcriber.model_name,
-                    duration_sec=duration,
-                )
+            try:
+                audio = self.recorder.get_all_audio()
+                duration = self.recorder.get_duration()
+                if len(audio) > 0:
+                    text = self.transcriber.transcribe_audio(audio)
+                    raw_text = text
+                    if self.postprocessor.client and text.strip():
+                        text = self.postprocessor.process(text)
+                    self.signals.final_text.emit(text)
+                    provider = self.db.get_active_provider()
+                    self.db.save_transcription(
+                        text, raw_text,
+                        provider=provider["name"] if provider else None,
+                        model=self.transcriber.model_name,
+                        duration_sec=duration,
+                    )
+            except Exception as e:
+                self.signals.final_text.emit(f"[Fehler bei Transkription: {e}]")
         threading.Thread(target=_final, daemon=True).start()
 
     def _live_transcribe_loop(self, sample_rate, chunk_duration_sec):
@@ -230,14 +266,12 @@ class MainWindow(QMainWindow):
 
     def _on_final_text(self, text):
         self.tab_transcription.set_text(text)
-        # Auto-clipboard
         if self.tab_transcription.auto_clipboard.isChecked():
             try:
                 import pyperclip
                 pyperclip.copy(text)
             except Exception:
                 pass
-        # Refresh archive
         archive = self.db.get_archive()
         self.tab_transcription.load_archive(archive)
 
