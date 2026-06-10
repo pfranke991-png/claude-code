@@ -1,0 +1,24 @@
+# Voice Transcriber — NanoGPT Edition
+# Abhängigkeiten / Dependencies
+
+# GUI (modernes Dark-Theme)
+customtkinter>=5.2.2
+
+# OpenAI-kompatible API (für NanoGPT)
+openai>=1.30.0
+
+# Lokale Spracherkennung (Whisper)
+openai-whisper>=20231117
+
+# Audio-Aufnahme
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# Numerische Berechnung (für Audio)
+numpy>=1.24.0
+
+# Zwischenablage
+pyperclip>=1.8.2
+
+# Für Whisper benötigt
+torch>=2.0.0
